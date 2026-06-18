@@ -58,4 +58,27 @@ public class StockController {
     public Stock createStock(@Valid @RequestBody Stock stock) {
         return stockService.createStock(stock);
     }
+
+    /**
+     * Handles PUT /api/stocks/{id} request.
+     *
+     * @param id stock ID
+     * @param stock updated stock data
+     * @return updated stock
+     */
+    @PutMapping("/{id}")
+    public Stock updateStock(@PathVariable Long id, @Valid @RequestBody Stock stock) {
+        return stockService.updateStock(id, stock);
+    }
+
+    /**
+     * Handles DELETE /api/stocks/{id} request.
+     *
+     * @param id stock ID
+     */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteStock(@PathVariable Long id) {
+        stockService.deleteStock(id);
+    }
 }

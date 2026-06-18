@@ -54,4 +54,33 @@ public class StockService {
     public Stock createStock(Stock stock) {
         return stockRepository.save(stock);
     }
+
+    /**
+     * Updates an existing stock.
+     *
+     * @param id stock ID
+     * @param updatedStock new stock data
+     * @return updated stock
+     */
+    public Stock updateStock(Long id, Stock updatedStock) {
+        Stock existingStock = getStockById(id);
+
+        existingStock.setSymbol(updatedStock.getSymbol());
+        existingStock.setCompanyName(updatedStock.getCompanyName());
+        existingStock.setSector(updatedStock.getSector());
+        existingStock.setCurrentPrice(updatedStock.getCurrentPrice());
+        existingStock.setCurrency(updatedStock.getCurrency());
+
+        return stockRepository.save(existingStock);
+    }
+
+    /**
+     * Deletes a stock by ID.
+     *
+     * @param id stock ID
+     */
+    public void deleteStock(Long id) {
+        Stock existingStock = getStockById(id);
+        stockRepository.delete(existingStock);
+    }
 }
