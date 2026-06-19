@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Portfolio API UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f4f6f8;
+        }
+
+        h1, h2 {
+            color: #222;
+        }
+
+        section {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            width: 180px;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background-color: #2563eb;
+            color: white;
+        }
+
+        button.delete {
+            background-color: #dc2626;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #e5e7eb;
+        }
+
+        pre {
+            background-color: #111827;
+            color: #e5e7eb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Stock Portfolio REST API</h1>
+
+<section>
+    <h2>Add Stock</h2>
+
+    <input id="symbol" placeholder="Symbol, e.g. AAPL">
+    <input id="companyName" placeholder="Company name">
+    <input id="sector" placeholder="Sector">
+    <input id="currentPrice" placeholder="Price" type="number" step="0.01">
+    <input id="currency" placeholder="Currency, e.g. USD">
+
+    <button onclick="addStock()">Add Stock</button>
+</section>
+
+<section>
+    <h2>Stocks</h2>
+    <button onclick="loadStocks()">Refresh Stocks</button>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Symbol</th>
+            <th>Company</th>
+            <th>Sector</th>
+            <th>Price</th>
+            <th>Currency</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody id="stocksTableBody"></tbody>
+    </table>
+</section>
+
+<section>
+    <h2>Portfolio Summary</h2>
+    <button onclick="loadPortfolioSummary()">Load Portfolio Summary</button>
+    <pre id="portfolioSummary">No summary loaded yet.</pre>
+</section>
+
+<section>
+    <h2>Daily Stock Recommendations</h2>
+    <button onclick="loadRecommendations()">Load Recommendations</button>
+    <pre id="recommendations">No recommendations loaded yet.</pre>
+</section>
+
+<script>
+    const API_BASE_URL = "http://localhost:8080";
+
+    async function loadStocks() {
+        const response = await fetch(`${API_BASE_URL}/api/stocks`);
+        const data = await response.json();
+
+        const tableBody = document.getElementById("stocksTableBody");
+        tableBody.innerHTML = "";
+
+        const stocks = data._embedded ? Object.values(data._embedded)[0] : [];
+
+        stocks.forEach(item => {
+            const stock = item;
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${stock.id}</td>
+                <td>${stock.symbol}</td>
+                <td>${stock.companyName}</td>
+                <td>${stock.sector}</td>
+                <td>${stock.currentPrice}</td>
+                <td>${stock.currency}</td>
+                <td>
+                    <button class="delete" onclick="deleteStock(${stock.id})">Delete</button>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+    }
+
+    async function addStock() {
+        const stock = {
+            symbol: document.getElementById("symbol").value,
+            companyName: document.getElementById("companyName").value,
+            sector: document.getElementById("sector").value,
+            currentPrice: Number(document.getElementById("currentPrice").value),
+            currency: document.getElementById("currency").value
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/stocks`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(stock)
+        });
+
+        if (response.ok) {
+            alert("Stock added successfully.");
+            clearStockForm();
+            loadStocks();
+        } else {
+            const error = await response.json();
+            alert("Error: " + error.message);
+        }
+    }
+
+    async function deleteStock(id) {
+        const confirmed = confirm("Are you sure you want to delete this stock?");
+
+        if (!confirmed) {
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/stocks/${id}`, {
+            method: "DELETE"
+        });
+
+        if (response.ok) {
+            alert("Stock deleted successfully.");
+            loadStocks();
+        } else {
+            alert("Could not delete stock.");
+        }
+    }
+
+    async function loadPortfolioSummary() {
+        const response = await fetch(`${API_BASE_URL}/api/portfolio/summary`);
+        const data = await response.json();
+
+        document.getElementById("portfolioSummary").textContent =
+            JSON.stringify(data, null, 2);
+    }
+
+    async function loadRecommendations() {
+        const response = await fetch(`${API_BASE_URL}/api/recommendations/daily`);
+        const data = await response.json();
+
+        document.getElementById("recommendations").textContent =
+            JSON.stringify(data, null, 2);
+    }
+
+    function clearStockForm() {
+        document.getElementById("symbol").value = "";
+        document.getElementById("companyName").value = "";
+        document.getElementById("sector").value = "";
+        document.getElementById("currentPrice").value = "";
+        document.getElementById("currency").value = "";
+    }
+
+    loadStocks();
+</script>
+
+</body>
+</html>
